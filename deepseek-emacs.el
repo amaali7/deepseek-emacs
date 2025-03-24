@@ -2,7 +2,7 @@
 
 ;; Author: Your Name
 ;; Version: 0.1
-;; Package-Requires: ((emacs "24.4") (ivy "0.13.0") (helm "3.0") (vertico "0.1"))
+;; Package-Requires: ((emacs "24.4") (ivy "0.13.0") (helm "3.0") (vertico))
 ;; Keywords: refactoring, ai, deepseek
 
 ;;; Commentary:
@@ -41,11 +41,11 @@
 (defun deepseek-select-refactored-code (refactored-options)
   "Select refactored code using the active completion framework."
   (cond
-   ((and (fboundp 'vertico-mode) vertico-mode)
+   ((and (fboundp 'vertico-mode) (bound-and-true-p vertico-mode))
     (completing-read "Select the best refactored code: " refactored-options))
-   ((and (fboundp 'ivy-read) (boundp 'ivy-mode) ivy-mode)
+   ((and (fboundp 'ivy-read) (bound-and-true-p ivy-mode))
     (ivy-read "Select the best refactored code: " refactored-options))
-   ((and (fboundp 'helm) (boundp 'helm-mode) helm-mode)
+   ((and (fboundp 'helm) (bound-and-true-p helm-mode))
     (helm :sources (helm-build-sync-source "Refactored Options"
                      :candidates refactored-options
                      :action (lambda (candidate)
