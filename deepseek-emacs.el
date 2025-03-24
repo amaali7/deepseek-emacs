@@ -36,8 +36,8 @@
     (ivy-read "Select refactored code: " options))
    ((and (fboundp 'helm) (bound-and-true-p helm-mode))
     (helm :sources (helm-build-sync-source "Options"
-                     :candidates options
-                     :action 'identity)))
+                                           :candidates options
+                                           :action 'identity)))
    (t (completing-read "Select refactored code: " options))))
 
 (defun deepseek-refactor-region-or-buffer ()
@@ -58,7 +58,7 @@
               (insert choice))
           (progn
             (erase-buffer)
-            (insert choice))))))
+            (insert choice)))))))
 
 (provide 'deepseek-emacs)
 ;;; deepseek-emacs.el ends here
