@@ -2,7 +2,7 @@
 
 ;; Author: Your Name
 ;; Version: 0.1
-;; Package-Requires: ((emacs "24.4") (ivy "0.13.0") (helm "3.0"))
+;; Package-Requires: ((emacs "24.4") (ivy "0.13.0") (helm "3.0") (vertico "0.1"))
 ;; Keywords: refactoring, ai, deepseek
 
 ;;; Commentary:
@@ -24,11 +24,6 @@
   :type 'string
   :group 'deepseek-emacs)
 
-(defcustom deepseek-completion-framework 'ivy
-  "The completion framework to use (ivy or helm)."
-  :type '(choice (const ivy) (const helm))
-  :group 'deepseek-emacs)
-
 (defun deepseek-api-request (input request)
   "Send INPUT and REQUEST to DeepSeek and return the response."
   (let ((url-request-method "POST")
@@ -42,6 +37,27 @@
       (goto-char (point-min))
       (re-search-forward "\n\n")
       (json-read-from-string (buffer-substring (point) (point-max))))))
+
+(defun deepseek-select-refactored-code (refactored-options)
+  "Select refactored code using the active completion framework."
+  (cond
+   ((and (fboundp 'vertico-mode) vertico-mode)
+    (completing-read "Select the best refactored code: " refactored-options))
+   ((and (fboundp 'ivy-read) (boundp 'ivy-mode) ivy-mode)
+    (ivy-read "Select the best refactored code: " refactored-options))
+   ((and (fboundp 'helm) (boundp 'helm-mode) helm-mode)
+    (helm :sources (helm-build-sync-source "Refactored Options"
+                     :candidates refactored-options
+                     :action (lambda (candidate)
+                               (if (use-region-p)
+                                   (progn
+                                     (delete-region (region-beginning) (region-end))
+                                     (insert candidate))
+                                 (progn
+                                   (erase-buffer)
+                                   (insert candidate)))))
+   (t
+    (completing-read "Select the best refactored code: " refactored-options))))
 
 (defun deepseek-refactor-region-or-buffer ()
   "Refactor the selected region or buffer using DeepSeek."
@@ -58,30 +74,15 @@
       (progn
         ;; Split refactored output into lines for selection
         (let ((refactored-options (split-string refactored-content "\n" t)))
-          (cond
-           ((eq deepseek-completion-framework 'ivy)
-            (ivy-read "Select the best refactored code: "
-                      refactored-options
-                      :action (lambda (candidate)
-                                (if (use-region-p)
-                                    (progn
-                                      (delete-region (region-beginning) (region-end))
-                                      (insert candidate))
-                                  (progn
-                                    (erase-buffer)
-                                    (insert candidate)))
-                                (message "Refactored code replaced successfully!"))))
-           ((eq deepseek-completion-framework 'helm)
-            (helm :sources (helm-build-sync-source "Refactored Options"
-                             :candidates refactored-options
-                             :action (lambda (candidate)
-                                       (if (use-region-p)
-                                           (progn
-                                             (delete-region (region-beginning) (region-end))
-                                             (insert candidate))
-                                         (progn
-                                           (erase-buffer)
-                                           (insert candidate))))))))))))
+          (let ((selected-code (deepseek-select-refactored-code refactored-options)))
+            (if (use-region-p)
+                (progn
+                  (delete-region (region-beginning) (region-end))
+                  (insert selected-code))
+              (progn
+                (erase-buffer)
+                (insert selected-code)))
+            (message "Refactored code replaced successfully!"))))))
 
 (defun deepseek-refactor-with-dialog ()
   "Refactor the selected region or buffer using an interactive dialog with DeepSeek."
