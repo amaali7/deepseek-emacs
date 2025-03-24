@@ -55,7 +55,7 @@
                                      (insert candidate))
                                  (progn
                                    (erase-buffer)
-                                   (insert candidate)))))
+                                   (insert candidate))))))
    (t
     (completing-read "Select the best refactored code: " refactored-options))))
 
